@@ -1,4 +1,10 @@
 const _state = {
+    settings: {
+        gridSize: {
+            rows: 4,
+            columns: 4,
+        },
+    },
     points: {
         google: 12,
         players: [3, 7]
@@ -22,4 +28,10 @@ export async function getPlayerPoints(playerNumber) {
     }
 
     return _state.points.players[idx]
+}
+
+
+export async function getGridSize() {
+    // copy of setting, to not allow mutability
+    return {..._state.settings.gridSize}
 }
