@@ -5,6 +5,6 @@ const rootElement = document.getElementById('root')
 rootElement.innerHTML = '';
 
 
-const app = App()
+const appComponent = App()
 
-rootElement.append(app)
+rootElement.append(appComponent.element)

@@ -5,15 +5,19 @@ import { Settings } from "./Settings/Settings.js";
 export function App() {
     const element = document.createElement("div")
     
-    const settings = Settings()
-    const resultPanel= ResultPanel()
-    const grid = Grid()
+    render(element)
+
+    return {element}
+}
+
+async function render(element) {
+    const settingsComponent = Settings()
+    const resultPanelComponent= ResultPanel()
+    const gridComponent = Grid()
 
     element.append(
-        settings,
-        resultPanel,
-        grid
-    )
-
-    return element
+        settingsComponent.element,
+        resultPanelComponent.element,
+        gridComponent.element
+    )    
 }
