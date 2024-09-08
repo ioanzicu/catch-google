@@ -3,21 +3,35 @@ import { ResultPanel } from "./ResultPanel/ResultPanel.js";
 import { Settings } from "./Settings/Settings.js";
 import { Lose } from "./Loose/Loose.js";
 import { Start } from "./Start.js";
-import { getGameStatus } from "../../core/state-manager.js";
+import { getGameStatus, subscribe } from "../../core/state-manager.js";
 import { GAME_STATUSES } from "../../core/constants.js";
 
 export function App() {
+    const localState = { prevGameStatus: null }
+    console.log('APP CREATING')
     const element = document.createElement("div")
     
-    render(element)
+    subscribe(() => {
+        render(element, localState)
+    })
 
-    return {element}
+    render(element, localState)
+
+    return { element }
 }
 
-async function render(element) {
-    
+async function render(element, localState) {
     const gameStatus = await getGameStatus()
 
+    if (localState.prevGameStatus === gameStatus)
+        return
+
+    localState.prevGameStatus = gameStatus
+
+    console.log('APP RENDERING')
+    
+    element.innerHTML = ''
+    
     switch (gameStatus) {
         case GAME_STATUSES.SETTINGS: {
             const settingsComponent = Settings()
