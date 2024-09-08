@@ -1,4 +1,7 @@
+import { GAME_STATUSES } from "./constants.js"
+
 const _state = {
+    gameStatus: GAME_STATUSES.SETTINGS,
     settings: {
         gridSize: {
             rows: 4,
@@ -84,22 +87,48 @@ function _jumpGoogleToNewPosition(){
     _state.positions.google = newPosition
 }
 
-let googleJumpInterval
-
-googleJumpInterval = setInterval(() => {
-    _jumpGoogleToNewPosition()
-    _state.points.google++
-
-    if (_state.points.google === _state.settings.pointsToLose) {
-        clearInterval(googleJumpInterval)
-    }
-
-    _notifyObservers()
-}, _state.settings.googleJumpIntervalMs)
-
 // INTERFACE/ADAPTER
 export async function getGooglePoints() {
     return _state.points.google
+}
+
+
+
+let googleJumpInterval
+
+export async function start() {
+    _state.gameStatus = GAME_STATUSES.IN_PROGRESS
+    _state.positions.players[0] = {
+        row: 0,
+        col: 0,
+    }
+    _state.positions.players[1] = {
+        row: _state.settings.gridSize.columns - 1,
+        col: _state.settings.gridSize.rows - 1,
+    }
+    _jumpGoogleToNewPosition()
+
+    _state.points.google = 0
+    _state.points.players = [0, 0]
+
+    googleJumpInterval = setInterval(() => {
+        _jumpGoogleToNewPosition()
+        _state.points.google++
+    
+        if (_state.points.google === _state.settings.pointsToLose) {
+            clearInterval(googleJumpInterval)
+            _state.gameStatus = GAME_STATUSES.LOSE
+        }
+    
+        _notifyObservers()
+    }, _state.settings.googleJumpIntervalMs)
+
+    _notifyObservers()
+}
+
+export async function playAgain() {
+    _state.gameStatus = GAME_STATUSES.SETTINGS
+    _notifyObservers()
 }
 
 /**
@@ -112,6 +141,9 @@ export async function getPlayerPoints(playerNumber) {
     return _state.points.players[idx]
 }
 
+export async function getGameStatus(playerNumber) {
+    return _state.gameStatus
+}
 
 export async function getGridSize() {
     // copy of setting, to not allow mutability
