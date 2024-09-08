@@ -97,6 +97,10 @@ export async function getGooglePoints() {
 let googleJumpInterval
 
 export async function start() {
+    if (_state.gameStatus !== GAME_STATUSES.SETTINGS) {
+        throw new Error(`Incorrect transition from "${_state.gameStatus}" to ${GAME_STATUSES.IN_PROGRESS}`)
+    }
+
     _state.gameStatus = GAME_STATUSES.IN_PROGRESS
     _state.positions.players[0] = {
         row: 0,
