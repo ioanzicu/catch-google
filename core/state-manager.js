@@ -1,4 +1,4 @@
-import { EVENTS, GAME_STATUSES } from "./constants.js"
+import { EVENTS, GAME_STATUSES, MOVING_DIRECTIONS } from "./constants.js"
 
 const _state = {
     gameStatus: GAME_STATUSES.SETTINGS,
@@ -84,19 +84,65 @@ function _jumpGoogleToNewPosition(){
         newPosition.col = _generateNewNumber(0, _state.settings.gridSize.columns-1)
 
         console.log('newPosition', newPosition )
-        var isNewPositionMatchWithCurrentGooglePosition = newPosition.row === _state.positions.google.row && newPosition.col === _state.positions.google.col
-        var isNewPositionMatchWithCurrentPlayer1Position = newPosition.row === _state.positions.players[0].row && newPosition.col === _state.positions.players[0].col
-        var isNewPositionMatchWithCurrentPlayer2Position = newPosition.row === _state.positions.players[1].row && newPosition.col === _state.positions.players[1].col
-    } while(isNewPositionMatchWithCurrentGooglePosition || isNewPositionMatchWithCurrentPlayer1Position || isNewPositionMatchWithCurrentPlayer2Position)
+    } while(
+        _checkPlayer1Position(newPosition) ||
+        _checkPlayer2Position(newPosition) || 
+        _checkGooglePosition(newPosition))
 
     _state.positions.google = newPosition
 }
 
-// INTERFACE/ADAPTER
-export async function getGooglePoints() {
-    return _state.points.google
+function _checkRange(position) {
+    if (position.row < 0 || position.row >= _state.settings.gridSize.rows) {
+        return false
+    }
+
+    if (position.col < 0 || position.col >= _state.settings.gridSize.columns) {
+        return false
+    }
+
+    return true
 }
 
+function _checkPlayer1Position(position) {
+    return position.row === _state.positions.players[0].row && position.col === _state.positions.players[0].col
+}
+
+function _checkPlayer2Position(position) {
+    return position.row === _state.positions.players[1].row && position.col === _state.positions.players[1].col
+}
+
+function _checkGooglePosition(position) {
+    return position.row === _state.positions.google.row && position.col === _state.positions.google.col
+}
+
+function _catchGoogle(playerNumber) {
+    const idx = _getPlayerIndexByNumber(playerNumber)
+
+    _state.points.players[idx]++
+    _notifyObservers(EVENTS.SCORES_CHANGED)
+
+    if ( _state.points.players[idx] === _state.settings.pointsToWin) {
+        // won
+        _state.gameStatus = GAME_STATUSES.WIN
+        _notifyObservers(EVENTS.STATUS_CHANGED)
+        clearInterval(googleJumpInterval)
+    } else {
+        const prevCoordinates = _state.positions.google
+        _jumpGoogleToNewPosition()
+        _notifyObservers(
+            EVENTS.GOOGLE_JUMPED,
+            {
+                prevCoordinates, 
+                newCoordinates: _state.positions.google,
+            }
+        )    
+    }
+}
+ 
+// INTERFACE/ADAPTER
+
+// COMMANDS / SETTER
 let googleJumpInterval
 
 export async function start() {
@@ -127,7 +173,7 @@ export async function start() {
                 ..._state.positions.google
             }
         })
-        
+
         _state.points.google++
         _notifyObservers(EVENTS.SCORES_CHANGED)
     
@@ -144,6 +190,63 @@ export async function start() {
 export async function playAgain() {
     _state.gameStatus = GAME_STATUSES.SETTINGS
     _notifyObservers(EVENTS.STATUS_CHANGED)
+}
+
+export async function movePlayer(playerNumber, direction) {
+    if (_state.gameStatus !== GAME_STATUSES.IN_PROGRESS) {
+        console.warn('You can move player only when game is in progress')
+        return
+    }
+     
+    const idx = _getPlayerIndexByNumber(playerNumber)
+    const prevCoordinates = {..._state.positions.players[idx]}
+    const newCoordinates = {..._state.positions.players[idx]}
+
+    switch (direction) {
+        case MOVING_DIRECTIONS.UP:
+            newCoordinates.row--
+            break
+        case MOVING_DIRECTIONS.DOWN:
+            newCoordinates.row++
+            break
+        case MOVING_DIRECTIONS.RIGHT:
+            newCoordinates.col++
+            break
+        case MOVING_DIRECTIONS.LEFT:
+            newCoordinates.col--
+            break
+    }
+
+    const isValidRange = _checkRange(newCoordinates)
+    if (!isValidRange)
+        return
+
+    const matchPlayer1Position = _checkPlayer1Position(newCoordinates)
+    if (matchPlayer1Position)
+        return
+    
+    const matchPlayer2Position = _checkPlayer2Position(newCoordinates)
+    if (matchPlayer2Position)
+        return
+    
+    const isGooglePositionTheSame = _checkGooglePosition(newCoordinates)
+    if (isGooglePositionTheSame) {
+        _catchGoogle(playerNumber)
+    }
+
+    _state.positions.players[idx] = newCoordinates
+    _notifyObservers(
+        EVENTS[`PLAYER${playerNumber}_MOVED`], 
+        {
+            prevCoordinates,
+            newCoordinates,
+        }
+    )
+}
+
+// GETTERS / SELECTORS / QUERY
+export async function getGooglePoints() {
+    return _state.points.google
 }
 
 /**

@@ -2,6 +2,7 @@ import { Grid } from "./Grid/Grid.js";
 import { ResultPanel } from "./ResultPanel/ResultPanel.js";
 import { Settings } from "./Settings/Settings.js";
 import { Lose } from "./Loose/Loose.js";
+import { Win } from "./Win/Win.js";
 import { Start } from "./Start.js";
 import { getGameStatus, subscribe } from "../../core/state-manager.js";
 import { GAME_STATUSES } from "../../core/constants.js";
@@ -61,6 +62,10 @@ async function render(element, localState) {
         case GAME_STATUSES.LOSE:
             const loseComponent = Lose()
             element.append(loseComponent.element)
+            break
+        case GAME_STATUSES.WIN:
+            const winComponent = Win()
+            element.append(winComponent.element)
             break
         default:
             throw new Error('not implemented')
