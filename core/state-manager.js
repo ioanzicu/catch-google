@@ -1,4 +1,4 @@
-import { GAME_STATUSES } from "./constants.js"
+import { EVENTS, GAME_STATUSES } from "./constants.js"
 
 const _state = {
     gameStatus: GAME_STATUSES.SETTINGS,
@@ -43,10 +43,15 @@ export function unsubscribe(observer) {
     _observers = _observers.filter(o => o != observer)
 }
 
-function _notifyObservers() {
+function _notifyObservers(name, payload = {}) {
+    const event = {
+        name, 
+        payload,
+    }
+
     _observers.forEach(o => {
         try{
-            o();
+            o(event);
         } catch(error) {
             console.log("Error: ", error)
         }
@@ -92,8 +97,6 @@ export async function getGooglePoints() {
     return _state.points.google
 }
 
-
-
 let googleJumpInterval
 
 export async function start() {
@@ -116,23 +119,31 @@ export async function start() {
     _state.points.players = [0, 0]
 
     googleJumpInterval = setInterval(() => {
+        const prevCoordinates = { ..._state.positions.google }
         _jumpGoogleToNewPosition()
+        _notifyObservers(EVENTS.GOOGLE_JUMPED, {
+            prevCoordinates,
+            newCoordinates: {
+                ..._state.positions.google
+            }
+        })
+        
         _state.points.google++
+        _notifyObservers(EVENTS.SCORES_CHANGED)
     
         if (_state.points.google === _state.settings.pointsToLose) {
             clearInterval(googleJumpInterval)
             _state.gameStatus = GAME_STATUSES.LOSE
         }
-    
-        _notifyObservers()
+        _notifyObservers(EVENTS.STATUS_CHANGED)
     }, _state.settings.googleJumpIntervalMs)
 
-    _notifyObservers()
+    _notifyObservers(EVENTS.STATUS_CHANGED)
 }
 
 export async function playAgain() {
     _state.gameStatus = GAME_STATUSES.SETTINGS
-    _notifyObservers()
+    _notifyObservers(EVENTS.STATUS_CHANGED)
 }
 
 /**
