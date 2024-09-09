@@ -7,7 +7,10 @@ import { getGameStatus, subscribe } from "../../core/state-manager.js";
 import { GAME_STATUSES } from "../../core/constants.js";
 
 export function App() {
-    const localState = { prevGameStatus: null }
+    const localState = { 
+        prevGameStatus: null,
+        cleanupFunctions: [],
+    }
     console.log('APP CREATING')
     const element = document.createElement("div")
     
@@ -29,7 +32,9 @@ async function render(element, localState) {
     localState.prevGameStatus = gameStatus
 
     console.log('APP RENDERING')
-    
+    localState.cleanupFunctions.forEach(cleanupFn => cleanupFn())
+    localState.cleanupFunctions = []
+
     element.innerHTML = ''
     
     switch (gameStatus) {
@@ -42,7 +47,11 @@ async function render(element, localState) {
         case GAME_STATUSES.IN_PROGRESS:
             const settingsComponent = Settings()
             const resultPanelComponent= ResultPanel()
+            localState.cleanupFunctions.push(resultPanelComponent.cleanup)
+
             const gridComponent = Grid()
+            localState.cleanupFunctions.push(gridComponent.cleanup)
+            
             element.append(
                 settingsComponent.element,
                 resultPanelComponent.element,
