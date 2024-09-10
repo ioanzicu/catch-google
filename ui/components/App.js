@@ -6,6 +6,7 @@ import { Win } from "./Win/Win.js";
 import { Start } from "./Start.js";
 import { getGameStatus, subscribe } from "../../core/state-manager.js";
 import { GAME_STATUSES } from "../../core/constants.js";
+import { AudioComponent } from "./Audio/Audio.js";
 
 export function App() {
     const localState = { 
@@ -15,6 +16,8 @@ export function App() {
     console.log('APP CREATING')
     const element = document.createElement("div")
     
+    const audioComponent = AudioComponent()
+
     subscribe(() => {
         render(element, localState)
     })
