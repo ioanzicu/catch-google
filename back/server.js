@@ -10,7 +10,7 @@ import {
     movePlayer, 
     getPlayerPoints,
     getPlayerPosition
-} from '../core/state-manager.js'
+} from '../core/state-manager-server.js'
 
 const app = express()
 app.use(cors())
