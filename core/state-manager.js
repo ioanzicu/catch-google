@@ -261,7 +261,7 @@ export async function getPlayerPoints(playerNumber) {
     return _state.points.players[idx]
 }
 
-export async function getGameStatus(playerNumber) {
+export async function getGameStatus() {
     return _state.gameStatus
 }
 
