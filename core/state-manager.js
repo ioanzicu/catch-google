@@ -1,4 +1,10 @@
-// import { EVENTS, GAME_STATUSES, MOVING_DIRECTIONS } from "./constants.js"
+
+const eventSource = new EventSource('http://localhost:3000/events')
+
+eventSource.addEventListener('message', (eventSourceEvent) => {
+    const event = JSON.parse(eventSourceEvent.data)
+    _notifyObservers(event.name, event.payload)
+})
 
 // OBSERVER
 let _observers = []
@@ -40,8 +46,8 @@ export async function playAgain() {
 
 export async function movePlayer(playerNumber, direction) {
     const response = await fetch(`http://localhost:3000/moveplayer?playerNumber=${playerNumber}&direction=${direction}`)
-    const obj = await response.json()
-    return obj.data    
+    // const obj = await response.json()
+    // return obj.data    
 }
 
 // GETTERS / SELECTORS / QUERY

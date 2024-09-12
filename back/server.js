@@ -9,7 +9,9 @@ import {
     getGooglePoints, 
     movePlayer, 
     getPlayerPoints,
-    getPlayerPosition
+    getPlayerPosition,
+    subscribe,
+    unsubscribe
 } from '../core/state-manager-server.js'
 
 const app = express()
@@ -21,6 +23,17 @@ app.get('/events', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
+
+    const observer = (e) => {
+        res.write(`data: ${JSON.stringify(e)}\n\n`)
+    }
+
+    subscribe(observer)
+
+    res.on('close', () => {
+        unsubscribe(observer)
+        res.end()
+    })
 })
 
 app.get('/start', async (req, res) => {
